@@ -1,5 +1,11 @@
 <resources>
 
     <string name="app_name">File downloader</string>
-
+	<string name  ="a_label">Picture downloader</string>
+	<string name =  "status_label">Status:</string>
+	<string name ="status_idle">Idle</string>
+	<string name  ="status_downloading">Downloading</string>
+	<string name = "status_downloaded">Downloaded</string>
+	<string name = "download_button">Download</string>
+	<string name ="image_URL">http://wallpoper.com/images/00/41/62/24/gorillaz_00416224.png</string>
 </resources>
