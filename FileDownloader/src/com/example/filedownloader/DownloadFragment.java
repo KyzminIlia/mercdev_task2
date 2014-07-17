@@ -34,26 +34,21 @@ import android.widget.Toast;
 
 public class DownloadFragment extends Fragment implements
 		LoaderCallbacks<Bitmap> {
+	SavedData data = new SavedData();
+
+	@Override
+	public void onStop() {
+		super.onStop();
+		Log.d(LOG_TAG, "fragment stopped");
+		data.setEnable(downloadButton.isEnabled());
+		data.setStatus(statusLabel.getText().toString());
+		data.setVisible(pb.getVisibility());
+	}
+
 	@Override
 	public void onActivityCreated(Bundle savedInstanceState) {
 		super.onActivityCreated(savedInstanceState);
 		this.getLoaderManager().initLoader(0, null, this);
-		if (savedInstanceState != null) {
-			downloadButton.setEnabled(savedInstanceState
-					.getBoolean("button_enabled"));
-			pb.setVisibility(savedInstanceState.getInt("pb_visible"));
-			statusLabel.setText(savedInstanceState.getString("status_label"));
-
-		}
-	}
-
-	@Override
-	public void onSaveInstanceState(Bundle outState) {
-		super.onSaveInstanceState(outState);
-		outState.putBoolean("button_enabled", downloadButton.isEnabled());
-		outState.putInt("pb_visible", pb.getVisibility());
-		outState.putString("status_label", statusLabel.getText().toString());
-
 	}
 
 	@Override
@@ -68,9 +63,11 @@ public class DownloadFragment extends Fragment implements
 		View v = inflater.inflate(R.layout.f_download, null);
 		pb = (ProgressBar) v.findViewById(R.id.downloadPB);
 		statusLabel = (TextView) v.findViewById(R.id.status_label);
+		statusLabel.setText(data.getStatus());
 		downloadButton = (Button) v.findViewById(R.id.downloadButton);
+		downloadButton.setEnabled(data.isEnable());
 		downloadButton.setOnClickListener(new DownloadClick());
-		pb.setVisibility(ProgressBar.INVISIBLE);
+		pb.setVisibility(data.getVisible());
 		return v;
 	}
 
@@ -85,6 +82,7 @@ public class DownloadFragment extends Fragment implements
 		Log.d(LOG_TAG, "fragment created");
 		super.onCreate(savedInstanceState);
 		setRetainInstance(true);
+		data.setStatus(getString(R.string.status_idle));
 	}
 
 	public class DownloadClick implements OnClickListener {
@@ -118,11 +116,13 @@ public class DownloadFragment extends Fragment implements
 			if (msg != null) {
 				if (getView() != null)
 					if (msg.getData().getString("exception") == null) {
+						Log.d(LOG_TAG, "message delivered");
 						statusLabel
 								.setText(getString(R.string.status_downloading));
 						int value = msg.getData().getInt("download");
 						pb.setProgress(value);
 					} else {
+						Log.d(LOG_TAG, "message delivered");
 						imgLoader.cancelLoad();
 						statusLabel.setText(getString(R.string.status_idle));
 						downloadButton.setEnabled(true);
@@ -153,8 +153,7 @@ public class DownloadFragment extends Fragment implements
 
 	@Override
 	public void onLoadFinished(Loader<Bitmap> arg0, Bitmap arg1) {
-		if (!imgLoader.isCanceled())
-			statusLabel.setText(getString(R.string.status_downloaded));
+		statusLabel.setText(getString(R.string.status_downloaded));
 		downloadButton.setEnabled(true);
 		downloadButton.setText(getString(R.string.open_button_text));
 		downloadButton.setOnClickListener(new OpenClick());

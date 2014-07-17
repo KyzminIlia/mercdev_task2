@@ -1,12 +1,13 @@
 <resources>
 
     <string name="app_name">File downloader</string>
-	<string name  ="a_label">Picture downloader</string>
-	<string name =  "status_label">Status:</string>
-	<string name ="status_idle">Status: Idle</string>
-	<string name  ="status_downloading">Status: Downloading</string>
-	<string name = "status_downloaded">Status: Downloaded</string>
-	<string name = "download_button_text">Download</string>
-	<string name ="image_URL">http://static.businessinsider.com/image/5221df9169beddce49072b56/image.jpg</string>
-	<string name = "open_button_text">Open</string>
+    <string name="a_label">Picture downloader</string>
+    <string name="status_label">Status:</string>
+    <string name="status_idle">Status: Idle</string>
+    <string name="status_downloading">Status: Downloading</string>
+    <string name="status_downloaded">Status: Downloaded</string>
+    <string name="download_button_text">Download</string>
+    <string name="image_URL">http://static.businessinsider.com/image/5221df9169beddce49072b56/image.jpg</string>
+    <string name="open_button_text">Open</string>
+
 </resources>
