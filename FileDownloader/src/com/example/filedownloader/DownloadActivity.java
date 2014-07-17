@@ -1,60 +1,38 @@
 package com.example.filedownloader;
 
-import android.app.Activity;
-import android.app.LoaderManager.LoaderCallbacks;
-import android.content.Intent;
-import android.content.Loader;
-import android.graphics.Bitmap;
-import android.net.Uri;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
-import android.view.View;
-import android.widget.Button;
-import android.widget.ProgressBar;
+import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.FragmentTransaction;
 
-public class DownloadActivity extends Activity implements LoaderCallbacks<Bitmap> {
-	ProgressBar pb;
-	ImageLoader imgLoader;
+public class DownloadActivity extends FragmentActivity {
+	DownloadFragment downloadFragment = new DownloadFragment();
+	FragmentTransaction ft;
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		setContentView(R.layout.a_download);
-		pb  =(ProgressBar) findViewById(R.id.downloadPB);
-		getLoaderManager().initLoader(0, null, this);
-	}
+		ft = getSupportFragmentManager().beginTransaction();
 
-	public void btnClick(View v) {
-		Button btnDownload = (Button) v;
-		btnDownload.setEnabled(false);
-			
-	}
+		if (savedInstanceState != null) {
 
-	@Override
-	public Loader<Bitmap> onCreateLoader(int id, Bundle args) {
-		imgLoader = new ImageLoader(this,getString(R.string.image_URL));	
-		imgLoader.setHandler(handler);
-		return null;
-	}
-	private Handler handler = new Handler(){
-		public void handleMessage(Message msg) {
-			if (msg!=null){
-			int value =msg.getData().getInt("download");
-			pb.setProgress(value);
-			}
-			}
-	};
-	
-	@Override
-	public void onLoadFinished(Loader<Bitmap> arg0, Bitmap arg1) {
-		// TODO Auto-generated method stub
-		startActivity(new Intent(Intent.ACTION_VIEW,Uri.parse("/sdcard/downloadedImage.png")));
-		
+			downloadFragment = (DownloadFragment) getSupportFragmentManager()
+					.getFragment(savedInstanceState, "downloadFragment");
+
+			ft.replace(android.R.id.content, downloadFragment,
+					"downloadFragment");
+
+		} else {
+
+			ft.add(android.R.id.content, downloadFragment, "downloadFragment");
+		}
+
+		ft.commit();
 	}
 
 	@Override
-	public void onLoaderReset(Loader<Bitmap> arg0) {
-		// TODO Auto-generated method stub
-		
+	protected void onSaveInstanceState(Bundle outState) {
+		super.onSaveInstanceState(outState);
+		getSupportFragmentManager().putFragment(outState, "downloadFragment",
+				downloadFragment);
 	}
 }
