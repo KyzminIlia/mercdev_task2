@@ -12,19 +12,15 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.IntentSender.SendIntentException;
-import android.content.Loader.OnLoadCanceledListener;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
+import android.os.Environment;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager.LoaderCallbacks;
 import android.support.v4.content.AsyncTaskLoader;
 import android.support.v4.content.Loader;
-import android.support.v4.content.Loader.OnLoadCompleteListener;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -43,7 +39,6 @@ public class DownloadFragment extends Fragment implements
 	private int visible = ProgressBar.INVISIBLE;
 	public static final String FRAGMENT_TAG = "DownloadFragment";
 	private static final String STATUS_TAG = "status";
-	private static final String DOWNLOAD_STATUS_TAG = "download status";
 	private static final String EXCEPTION_TAG = "exception";
 	private static final String BROADCAST_RECIEVER_ACTION = "com.example.filedownloader";
 
@@ -141,7 +136,6 @@ public class DownloadFragment extends Fragment implements
 
 		@Override
 		public void onClick(View v) {
-			Loader<Bitmap> loader;
 			Button btnDownload = (Button) v;
 			btnDownload.setEnabled(false);
 			progressBar.setVisibility(ProgressBar.VISIBLE);
@@ -165,11 +159,13 @@ public class DownloadFragment extends Fragment implements
 	public class OpenClick implements OnClickListener {
 		@Override
 		public void onClick(View v) {
-			// TODO Auto-generated method stub
 			Intent intent = new Intent();
 			intent.setAction(Intent.ACTION_VIEW);
-			intent.setDataAndType(Uri.parse("file://"
-					+ "/sdcard/downloadedImage.png"), "image/*");
+			intent.setDataAndType(
+					Uri.parse("file://"
+							+ Environment.getExternalStorageDirectory()
+									.getPath() + "/downloadedImage.png"),
+					"image/*");
 			startActivity(intent);
 		}
 
@@ -185,14 +181,7 @@ public class DownloadFragment extends Fragment implements
 
 	}
 
-	@Override
-	public void onLoaderReset(Loader<Bitmap> arg0) {
-		// TODO Auto-generated method stub
-
-	}
-
 	private static class ImageLoader extends AsyncTaskLoader<Bitmap> {
-		private boolean canceled = true;
 		private String stringUrl;
 		private Bitmap pic;
 		private String LOG_TAG = getClass().getSimpleName().toString();
@@ -206,14 +195,6 @@ public class DownloadFragment extends Fragment implements
 		@Override
 		protected void onForceLoad() {
 			super.onForceLoad();
-			canceled = false;
-
-		}
-
-		@Override
-		public void onCanceled(Bitmap data) {
-			super.onCanceled(data);
-			canceled = true;
 
 		}
 
@@ -228,8 +209,9 @@ public class DownloadFragment extends Fragment implements
 				connection.connect();
 				int lenghtOfFile = connection.getContentLength();
 				input = new BufferedInputStream(url.openStream(), 8192);
-				OutputStream output = new FileOutputStream(
-						"/sdcard/downloadedImage.png");
+				OutputStream output = new FileOutputStream(Environment
+						.getExternalStorageDirectory().getAbsolutePath()
+						+ "/downloadedImage.png");
 				byte data[] = new byte[1024];
 				long total = 0;
 				while ((count = input.read(data)) != -1) {
@@ -242,7 +224,9 @@ public class DownloadFragment extends Fragment implements
 					output.write(data, 0, count);
 					Log.d(LOG_TAG, "load " + total + "/" + lenghtOfFile);
 				}
-				pic = BitmapFactory.decodeFile("/sdcard/downloadedImage.png");
+				pic = BitmapFactory.decodeFile(Environment
+						.getExternalStorageDirectory().getAbsolutePath()
+						+ "/downloadedImage.png");
 				pic.compress(Bitmap.CompressFormat.PNG, 100, output);
 				output.flush();
 				output.close();
@@ -263,13 +247,11 @@ public class DownloadFragment extends Fragment implements
 
 		}
 
-		public boolean isCanceled() {
-			return canceled;
-		}
+	}
 
-		public void setCanceled(boolean cancelled) {
-			this.canceled = cancelled;
-		}
+	@Override
+	public void onLoaderReset(Loader<Bitmap> arg0) {
 
+		
 	}
 }
