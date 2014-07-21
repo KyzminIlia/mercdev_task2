@@ -51,9 +51,15 @@ public class DownloadFragment extends Fragment implements
 		data.setEnable(downloadButton.isEnabled());
 		data.setStatus(statusLabel.getText().toString());
 		data.setVisible(progressBar.getVisibility());
+
+	}
+
+	@Override
+	public void onDestroy() {
+		super.onDestroy();
+
 		getActivity().getApplicationContext().unregisterReceiver(
 				downloadReceiver);
-
 	}
 
 	@Override
