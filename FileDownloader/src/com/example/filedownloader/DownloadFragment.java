@@ -37,7 +37,10 @@ import android.widget.Toast;
 
 public class DownloadFragment extends Fragment implements
 		LoaderCallbacks<Bitmap> {
-	SavedData data = new SavedData();
+
+	private String status;
+	private boolean enable = true;
+	private int visible = ProgressBar.INVISIBLE;
 	public static final String FRAGMENT_TAG = "DownloadFragment";
 	private static final String STATUS_TAG = "status";
 	private static final String DOWNLOAD_STATUS_TAG = "download status";
@@ -48,9 +51,9 @@ public class DownloadFragment extends Fragment implements
 	public void onStop() {
 		super.onStop();
 		Log.d(LOG_TAG, "fragment stopped");
-		data.setEnable(downloadButton.isEnabled());
-		data.setStatus(statusLabel.getText().toString());
-		data.setVisible(progressBar.getVisibility());
+		enable = downloadButton.isEnabled();
+		status = statusLabel.getText().toString();
+		visible = progressBar.getVisibility();
 
 	}
 
@@ -80,11 +83,11 @@ public class DownloadFragment extends Fragment implements
 		View v = inflater.inflate(R.layout.f_download, null);
 		progressBar = (ProgressBar) v.findViewById(R.id.download_progress_bar);
 		statusLabel = (TextView) v.findViewById(R.id.status_label);
-		statusLabel.setText(data.getStatus());
+		statusLabel.setText(status);
 		downloadButton = (Button) v.findViewById(R.id.download_button);
-		downloadButton.setEnabled(data.isEnable());
+		downloadButton.setEnabled(enable);
 		downloadButton.setOnClickListener(new DownloadClick());
-		progressBar.setVisibility(data.getVisible());
+		progressBar.setVisibility(visible);
 		return v;
 	}
 
@@ -131,7 +134,7 @@ public class DownloadFragment extends Fragment implements
 		getActivity().getApplicationContext().registerReceiver(
 				downloadReceiver, new IntentFilter(BROADCAST_RECIEVER_ACTION));
 		setRetainInstance(true);
-		data.setStatus(getString(R.string.status_idle));
+		status = getString(R.string.status_idle);
 	}
 
 	public class DownloadClick implements OnClickListener {
