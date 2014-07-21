@@ -51,6 +51,9 @@ public class DownloadFragment extends Fragment implements
 		data.setEnable(downloadButton.isEnabled());
 		data.setStatus(statusLabel.getText().toString());
 		data.setVisible(progressBar.getVisibility());
+		getActivity().getApplicationContext().unregisterReceiver(
+				downloadReceiver);
+
 	}
 
 	@Override
@@ -84,35 +87,39 @@ public class DownloadFragment extends Fragment implements
 	String LOG_TAG = getClass().getSimpleName().toString();
 	Button downloadButton;
 	TextView statusLabel;
+	BroadcastReceiver downloadReceiver;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		Log.d(LOG_TAG, "fragment created");
 		super.onCreate(savedInstanceState);
-		BroadcastReceiver downloadReceiver = new BroadcastReceiver() {
+		downloadReceiver = new BroadcastReceiver() {
 
 			@Override
 			public void onReceive(Context arg0, Intent arg1) {
 				Intent msgIntent = arg1;
 				int status = msgIntent.getIntExtra(STATUS_TAG, 0);
-				if (msgIntent.getStringExtra(EXCEPTION_TAG) == null) {
-					Log.d(LOG_TAG, "message delivered");
-					statusLabel.setText(getString(R.string.status_downloading));
-					progressBar.setProgress(status);
-				} else {
-					Log.d(LOG_TAG, "message delivered");
-					imgLoader.cancelLoad();
-					statusLabel.setText(getString(R.string.status_idle));
-					downloadButton.setEnabled(true);
-					downloadButton
-							.setText(getString(R.string.download_button_text));
-					progressBar.setVisibility(ProgressBar.INVISIBLE);
-					Toast toast = Toast.makeText(getView().getContext(),
-							msgIntent.getStringExtra(EXCEPTION_TAG),
-							Toast.LENGTH_LONG);
-					toast.show();
-				}
+				if (getActivity() != null) {
+					if (msgIntent.getStringExtra(EXCEPTION_TAG) == null) {
+						Log.d(LOG_TAG, "message delivered");
+						statusLabel
+								.setText(getString(R.string.status_downloading));
+						progressBar.setProgress(status);
+					} else {
+						Log.d(LOG_TAG, "message delivered");
+						imgLoader.cancelLoad();
+						statusLabel.setText(getString(R.string.status_idle));
+						downloadButton.setEnabled(true);
+						downloadButton
+								.setText(getString(R.string.download_button_text));
+						progressBar.setVisibility(ProgressBar.INVISIBLE);
+						Toast toast = Toast.makeText(getView().getContext(),
+								msgIntent.getStringExtra(EXCEPTION_TAG),
+								Toast.LENGTH_LONG);
+						toast.show();
+					}
 
+				}
 			}
 		};
 		getActivity().getApplicationContext().registerReceiver(
