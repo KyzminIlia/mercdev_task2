@@ -11,5 +11,7 @@
     <string name="open_button_text">Open</string>
     <string name="url_edit_label">Enter image URL</string>
     <string name="default_image_name">image.jpg</string>
+    <string name ="bad_extension_message">Неверный формат изображения</string>
+    <string name = "bad_URL_message">Неверный URL</string>
 
 </resources>

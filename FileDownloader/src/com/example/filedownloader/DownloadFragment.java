@@ -15,6 +15,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
@@ -54,6 +55,7 @@ public class DownloadFragment extends Fragment implements
 	private static final String IMAGE_EXTENSION_FILTER = "((?i)(jpg|png|gif|bmp|jpeg|ico))";
 	private boolean downloading = false;
 	private boolean downloaded = false;
+	public static String PREFS_URL = "com.example.filedownloader.URL";
 
 	@Override
 	public void onResume() {
@@ -99,7 +101,10 @@ public class DownloadFragment extends Fragment implements
 	@Override
 	public void onDestroy() {
 		super.onDestroy();
-
+		SharedPreferences sharedURL = getActivity().getPreferences(0);
+		SharedPreferences.Editor sharedURLEditor = sharedURL.edit();
+		sharedURLEditor.putString(PREFS_URL, url);
+		sharedURLEditor.commit();
 		LocalBroadcastManager.getInstance(getActivity()).unregisterReceiver(
 				downloadReceiver);
 	}
@@ -211,6 +216,8 @@ public class DownloadFragment extends Fragment implements
 	public void onCreate(Bundle savedInstanceState) {
 		Log.d(LOG_TAG, "fragment created");
 		super.onCreate(savedInstanceState);
+		SharedPreferences sharedURL = getActivity().getPreferences(0);
+		url = sharedURL.getString(PREFS_URL, "");
 		downloadReceiver = new BroadcastReceiver() {
 
 			@Override
