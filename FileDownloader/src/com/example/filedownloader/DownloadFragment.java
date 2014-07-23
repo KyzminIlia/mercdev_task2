@@ -22,6 +22,7 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager.LoaderCallbacks;
 import android.support.v4.content.AsyncTaskLoader;
 import android.support.v4.content.Loader;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -38,11 +39,30 @@ public class DownloadFragment extends Fragment implements
 	private String status;
 	private boolean enable = true;
 	private int visible = ProgressBar.INVISIBLE;
-	public static final String FRAGMENT_TAG = "DownloadFragment";
-	private static final String STATUS_TAG = "status";
-	private static final String EXCEPTION_TAG = "exception";
-	private static final String BROADCAST_RECIEVER_ACTION = "com.example.filedownloader";
+	public static final String FRAGMENT_TAG = DownloadFragment.class
+			.getSimpleName();
+	private static final String EXTRA_STATUS = "com.example.filedownloader.STATUS";
+	private static final String EXTRA_EXCEPTION = "com.example.filedownloader.EXCEPTION";
+	private static final String ACTION_CHANGE_STATUS = "com.example.filedownloader.CHANGE_STATUS";
 	private boolean downloading = false;
+
+	@Override
+	public void onResume() {
+		super.onResume();
+		File downloadedImage = new File(Environment
+				.getExternalStorageDirectory().getAbsolutePath()
+				+ "/downloadedImage.png");
+		if (downloadedImage.exists() && !downloading) {
+			downloadButton.setEnabled(true);
+			enable = true;
+			downloadButton.setText(getString(R.string.open_button_text));
+			statusLabel.setText(getString(R.string.status_downloaded));
+			status = statusLabel.getText().toString();
+			downloadButton.setOnClickListener(new OpenClick());
+			progressBar.setVisibility(ProgressBar.INVISIBLE);
+			visible = ProgressBar.INVISIBLE;
+		}
+	}
 
 	@Override
 	public void onStop() {
@@ -59,7 +79,7 @@ public class DownloadFragment extends Fragment implements
 	public void onDestroy() {
 		super.onDestroy();
 
-		getActivity().getApplicationContext().unregisterReceiver(
+		LocalBroadcastManager.getInstance(getActivity()).unregisterReceiver(
 				downloadReceiver);
 	}
 
@@ -82,24 +102,12 @@ public class DownloadFragment extends Fragment implements
 		statusLabel = (TextView) v.findViewById(R.id.status_label);
 		downloadButton = (Button) v.findViewById(R.id.download_button);
 		progressBar = (ProgressBar) v.findViewById(R.id.download_progress_bar);
-		File downloadedImage = new File(Environment
-				.getExternalStorageDirectory().getAbsolutePath()
-				+ "/downloadedImage.png");
-		if (downloadedImage.exists() && !downloading) {
-			downloadButton.setEnabled(true);
-			enable = true;
-			downloadButton.setText(getString(R.string.open_button_text));
-			statusLabel.setText(getString(R.string.status_downloaded));
-			status = statusLabel.getText().toString();
-			downloadButton.setOnClickListener(new OpenClick());
-			progressBar.setVisibility(ProgressBar.INVISIBLE);
-			visible = ProgressBar.INVISIBLE;
-		} else {
-			statusLabel.setText(status);
-			downloadButton.setEnabled(enable);
-			downloadButton.setOnClickListener(new DownloadClick());
-			progressBar.setVisibility(visible);
-		}
+
+		statusLabel.setText(status);
+		downloadButton.setEnabled(enable);
+		downloadButton.setOnClickListener(new DownloadClick());
+		progressBar.setVisibility(visible);
+
 		return v;
 	}
 
@@ -119,9 +127,9 @@ public class DownloadFragment extends Fragment implements
 			@Override
 			public void onReceive(Context arg0, Intent arg1) {
 				Intent msgIntent = arg1;
-				int status = msgIntent.getIntExtra(STATUS_TAG, 0);
+				int status = msgIntent.getIntExtra(EXTRA_STATUS, 0);
 				if (getActivity() != null) {
-					if (msgIntent.getStringExtra(EXCEPTION_TAG) == null) {
+					if (msgIntent.getStringExtra(EXTRA_EXCEPTION) == null) {
 						Log.d(LOG_TAG, "message delivered");
 						statusLabel
 								.setText(getString(R.string.status_downloading));
@@ -136,7 +144,7 @@ public class DownloadFragment extends Fragment implements
 								.setText(getString(R.string.download_button_text));
 						progressBar.setVisibility(ProgressBar.INVISIBLE);
 						Toast toast = Toast.makeText(getView().getContext(),
-								msgIntent.getStringExtra(EXCEPTION_TAG),
+								msgIntent.getStringExtra(EXTRA_EXCEPTION),
 								Toast.LENGTH_SHORT);
 						toast.show();
 					}
@@ -144,8 +152,8 @@ public class DownloadFragment extends Fragment implements
 				}
 			}
 		};
-		getActivity().getApplicationContext().registerReceiver(
-				downloadReceiver, new IntentFilter(BROADCAST_RECIEVER_ACTION));
+		LocalBroadcastManager.getInstance(getActivity()).registerReceiver(
+				downloadReceiver, new IntentFilter(ACTION_CHANGE_STATUS));
 		setRetainInstance(true);
 		status = getString(R.string.status_idle);
 	}
@@ -238,9 +246,10 @@ public class DownloadFragment extends Fragment implements
 					total += count;
 					Log.d(LOG_TAG, "set message");
 					int status = (int) ((total * 100) / lenghtOfFile);
-					Intent msgIntent = new Intent(BROADCAST_RECIEVER_ACTION);
-					msgIntent.putExtra(DownloadFragment.STATUS_TAG, status);
-					getContext().sendBroadcast(msgIntent);
+					Intent msgIntent = new Intent(ACTION_CHANGE_STATUS);
+					msgIntent.putExtra(DownloadFragment.EXTRA_STATUS, status);
+					LocalBroadcastManager.getInstance(getContext())
+							.sendBroadcast(msgIntent);
 					output.write(data, 0, count);
 					Log.d(LOG_TAG, "load " + total + "/" + lenghtOfFile);
 				}
@@ -253,9 +262,9 @@ public class DownloadFragment extends Fragment implements
 				return pic;
 			} catch (IOException e) {
 				String exception = "Невозможно соединиться с сайтом";
-				getContext().sendBroadcast(
-						new Intent(BROADCAST_RECIEVER_ACTION).putExtra(
-								DownloadFragment.EXCEPTION_TAG, exception));
+				LocalBroadcastManager.getInstance(getContext()).sendBroadcast(
+						new Intent(ACTION_CHANGE_STATUS).putExtra(
+								DownloadFragment.EXTRA_EXCEPTION, exception));
 			}
 			return null;
 
