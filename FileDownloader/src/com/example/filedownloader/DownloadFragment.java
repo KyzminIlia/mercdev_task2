@@ -6,8 +6,10 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.util.regex.Pattern;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -23,12 +25,15 @@ import android.support.v4.app.LoaderManager.LoaderCallbacks;
 import android.support.v4.content.AsyncTaskLoader;
 import android.support.v4.content.Loader;
 import android.support.v4.content.LocalBroadcastManager;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -37,31 +42,45 @@ public class DownloadFragment extends Fragment implements
 		LoaderCallbacks<Bitmap> {
 
 	private String status;
-	private boolean enable = true;
+	private String url = "";
+	private boolean urlEditEnabled = true;
+	private boolean buttonEnabled = true;
 	private int visible = ProgressBar.INVISIBLE;
 	public static final String FRAGMENT_TAG = DownloadFragment.class
 			.getSimpleName();
 	private static final String EXTRA_STATUS = "com.example.filedownloader.STATUS";
 	private static final String EXTRA_EXCEPTION = "com.example.filedownloader.EXCEPTION";
 	private static final String ACTION_CHANGE_STATUS = "com.example.filedownloader.CHANGE_STATUS";
+	private static final String IMAGE_EXTENSION_FILTER = "((?i)(jpg|png|gif|bmp|jpeg|ico))";
 	private boolean downloading = false;
+	private boolean downloaded = false;
 
 	@Override
 	public void onResume() {
 		super.onResume();
+
 		File downloadedImage = new File(Environment
 				.getExternalStorageDirectory().getAbsolutePath()
-				+ "/downloadedImage.png");
+				+ imgLoader.getImageName());
 		if (downloadedImage.exists() && !downloading) {
 			downloadButton.setEnabled(true);
-			enable = true;
+			buttonEnabled = true;
 			downloadButton.setText(getString(R.string.open_button_text));
 			statusLabel.setText(getString(R.string.status_downloaded));
 			status = statusLabel.getText().toString();
 			downloadButton.setOnClickListener(new OpenClick());
 			progressBar.setVisibility(ProgressBar.INVISIBLE);
 			visible = ProgressBar.INVISIBLE;
+			urlEditEnabled = true;
+		} else {
+			statusLabel.setText(status);
+			downloadButton.setEnabled(buttonEnabled);
+			downloadButton.setOnClickListener(new DownloadClick());
+			progressBar.setVisibility(visible);
+			urlEdit.setEnabled(urlEditEnabled);
+			urlEdit.setText(url);
 		}
+
 	}
 
 	@Override
@@ -69,9 +88,11 @@ public class DownloadFragment extends Fragment implements
 
 		super.onStop();
 		Log.d(LOG_TAG, "fragment stopped");
-		enable = downloadButton.isEnabled();
+		buttonEnabled = downloadButton.isEnabled();
 		status = statusLabel.getText().toString();
 		visible = progressBar.getVisibility();
+		urlEditEnabled = urlEdit.isEnabled();
+		url = urlEdit.getText().toString();
 
 	}
 
@@ -102,12 +123,79 @@ public class DownloadFragment extends Fragment implements
 		statusLabel = (TextView) v.findViewById(R.id.status_label);
 		downloadButton = (Button) v.findViewById(R.id.download_button);
 		progressBar = (ProgressBar) v.findViewById(R.id.download_progress_bar);
-
+		urlEdit = (EditText) v.findViewById(R.id.url_edit);
 		statusLabel.setText(status);
-		downloadButton.setEnabled(enable);
+		downloadButton.setEnabled(buttonEnabled);
 		downloadButton.setOnClickListener(new DownloadClick());
 		progressBar.setVisibility(visible);
+		urlEdit.setText(url);
+		urlEdit.setEnabled(urlEditEnabled);
+		urlEdit.addTextChangedListener(new TextWatcher() {
 
+			@Override
+			public void onTextChanged(CharSequence s, int start, int before,
+					int count) {
+
+			}
+
+			@Override
+			public void beforeTextChanged(CharSequence s, int start, int count,
+					int after) {
+
+			}
+
+			@Override
+			public void afterTextChanged(Editable s) {
+				String imageName = urlEdit
+						.getText()
+						.toString()
+						.substring(
+								urlEdit.getText().toString().lastIndexOf('/') + 1);
+				File downloadedImage = new File(Environment
+						.getExternalStorageDirectory().getAbsolutePath()
+						+ "/"
+						+ imageName);
+				if (imageName.equals("")) {
+					imageName = getString(R.string.default_image_name);
+					File image = new File(Environment
+							.getExternalStorageDirectory().getAbsolutePath()
+							+ "/" + imageName);
+					if (image.exists()) {
+						downloaded = false;
+						imgLoader.setImageName(imageName);
+						downloadButton
+								.setText(getString(R.string.open_button_text));
+						statusLabel
+								.setText(getString(R.string.status_downloaded));
+						status = statusLabel.getText().toString();
+						downloadButton.setOnClickListener(new OpenClick());
+					}
+
+				} else if (downloadedImage.exists() && !imageName.equals("")) {
+					downloaded = false;
+					imgLoader.setImageName(imageName);
+					downloadButton
+							.setText(getString(R.string.open_button_text));
+					statusLabel.setText(getString(R.string.status_downloaded));
+					status = statusLabel.getText().toString();
+					downloadButton.setOnClickListener(new OpenClick());
+
+				} else {
+					if (!downloading && !downloaded) {
+						statusLabel.setText(getString(R.string.status_idle));
+						status = statusLabel.getText().toString();
+						downloadButton.setEnabled(buttonEnabled);
+						downloadButton
+								.setText(getString(R.string.download_button_text));
+						downloadButton.setOnClickListener(new DownloadClick());
+						progressBar.setVisibility(ProgressBar.INVISIBLE);
+						visible = ProgressBar.INVISIBLE;
+						urlEdit.setEnabled(urlEditEnabled);
+					}
+				}
+
+			}
+		});
 		return v;
 	}
 
@@ -117,6 +205,7 @@ public class DownloadFragment extends Fragment implements
 	Button downloadButton;
 	TextView statusLabel;
 	BroadcastReceiver downloadReceiver;
+	EditText urlEdit;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -166,6 +255,11 @@ public class DownloadFragment extends Fragment implements
 			btnDownload.setEnabled(false);
 			progressBar.setVisibility(ProgressBar.VISIBLE);
 			try {
+				if (urlEdit.getText().toString().equals(""))
+					imgLoader.setStringUrl(getString(R.string.image_URL));
+				else
+					imgLoader.setStringUrl(urlEdit.getText().toString());
+				progressBar.setProgress(0);
 				downloading = true;
 				imgLoader.forceLoad();
 			} catch (Exception e) {
@@ -178,8 +272,7 @@ public class DownloadFragment extends Fragment implements
 
 	@Override
 	public Loader<Bitmap> onCreateLoader(int id, Bundle args) {
-		imgLoader = new ImageLoader(getActivity(),
-				getString(R.string.image_URL));
+		imgLoader = new ImageLoader(getActivity());
 		return imgLoader;
 	}
 
@@ -188,14 +281,11 @@ public class DownloadFragment extends Fragment implements
 		public void onClick(View v) {
 			Intent intent = new Intent();
 			intent.setAction(Intent.ACTION_VIEW);
-			intent.setDataAndType(
-					Uri.parse("file://"
-							+ Environment.getExternalStorageDirectory()
-									.getPath() + "/downloadedImage.png"),
-					"image/*");
+			intent.setDataAndType(Uri.parse("file://"
+					+ Environment.getExternalStorageDirectory().getPath() + "/"
+					+ imgLoader.getImageName()), "image/*");
 			startActivity(intent);
 		}
-
 	}
 
 	@Override
@@ -206,18 +296,30 @@ public class DownloadFragment extends Fragment implements
 		downloadButton.setOnClickListener(new OpenClick());
 		progressBar.setVisibility(ProgressBar.INVISIBLE);
 		downloading = false;
+		downloaded = true;
 
 	}
 
 	private static class ImageLoader extends AsyncTaskLoader<Bitmap> {
+		public ImageLoader(Context context) {
+			super(context);
+		}
+
 		private String stringUrl;
 		private Bitmap pic;
 		private String LOG_TAG = getClass().getSimpleName().toString();
+		private String imageName;
 
-		public ImageLoader(Context context, String url) {
-			super(context);
-			this.stringUrl = url;
-			Log.d(LOG_TAG, "loader constructor");
+		public void setImageName(String name) {
+			imageName = name;
+		}
+
+		public String getImageName() {
+			return imageName;
+		}
+
+		public void setStringUrl(String url) {
+			stringUrl = url;
 		}
 
 		@Override
@@ -232,34 +334,55 @@ public class DownloadFragment extends Fragment implements
 			int count;
 			try {
 				Log.d(LOG_TAG, "background load");
-				URL url = new URL(stringUrl);
-				URLConnection connection = url.openConnection();
-				connection.connect();
-				int lenghtOfFile = connection.getContentLength();
-				input = new BufferedInputStream(url.openStream(), 1024);
-				OutputStream output = new FileOutputStream(Environment
-						.getExternalStorageDirectory().getAbsolutePath()
-						+ "/downloadedImage.png");
-				byte data[] = new byte[1024];
-				long total = 0;
-				while ((count = input.read(data)) != -1) {
-					total += count;
-					Log.d(LOG_TAG, "set message");
-					int status = (int) ((total * 100) / lenghtOfFile);
-					Intent msgIntent = new Intent(ACTION_CHANGE_STATUS);
-					msgIntent.putExtra(DownloadFragment.EXTRA_STATUS, status);
+				imageName = stringUrl.substring(stringUrl.lastIndexOf('/') + 1);
+				String extension = imageName
+						.substring(imageName.indexOf('.') + 1);
+				Pattern extensionPattern = Pattern
+						.compile(IMAGE_EXTENSION_FILTER);
+				if (extensionPattern.matcher(extension).matches()) {
+					URL url = new URL(stringUrl);
+					URLConnection connection = url.openConnection();
+					connection.connect();
+					int lenghtOfFile = connection.getContentLength();
+					input = new BufferedInputStream(url.openStream(), 1024);
+					OutputStream output = new FileOutputStream(Environment
+							.getExternalStorageDirectory().getAbsolutePath()
+							+ "/" + imageName);
+					byte data[] = new byte[1024];
+					long total = 0;
+					while ((count = input.read(data)) != -1) {
+						total += count;
+						Log.d(LOG_TAG, "set message");
+						int status = (int) ((total * 100) / lenghtOfFile);
+						Intent msgIntent = new Intent(ACTION_CHANGE_STATUS);
+						msgIntent.putExtra(DownloadFragment.EXTRA_STATUS,
+								status);
+						LocalBroadcastManager.getInstance(getContext())
+								.sendBroadcast(msgIntent);
+						output.write(data, 0, count);
+						Log.d(LOG_TAG, "load " + total + "/" + lenghtOfFile);
+					}
+					pic = BitmapFactory.decodeFile(Environment
+							.getExternalStorageDirectory().getAbsolutePath()
+							+ "/" + imageName);
+					pic.compress(Bitmap.CompressFormat.PNG, 100, output);
+					output.flush();
+					output.close();
+					return pic;
+				} else {
+					String exception = "Неверный формат изображения";
 					LocalBroadcastManager.getInstance(getContext())
-							.sendBroadcast(msgIntent);
-					output.write(data, 0, count);
-					Log.d(LOG_TAG, "load " + total + "/" + lenghtOfFile);
+							.sendBroadcast(
+									new Intent(ACTION_CHANGE_STATUS).putExtra(
+											DownloadFragment.EXTRA_EXCEPTION,
+											exception));
 				}
-				pic = BitmapFactory.decodeFile(Environment
-						.getExternalStorageDirectory().getAbsolutePath()
-						+ "/downloadedImage.png");
-				pic.compress(Bitmap.CompressFormat.PNG, 100, output);
-				output.flush();
-				output.close();
-				return pic;
+			} catch (MalformedURLException e) {
+				String exception = "Неверный URL";
+				LocalBroadcastManager.getInstance(getContext()).sendBroadcast(
+						new Intent(ACTION_CHANGE_STATUS).putExtra(
+								DownloadFragment.EXTRA_EXCEPTION, exception));
+
 			} catch (IOException e) {
 				String exception = "Невозможно соединиться с сайтом";
 				LocalBroadcastManager.getInstance(getContext()).sendBroadcast(

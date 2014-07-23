@@ -9,5 +9,7 @@
     <string name="download_button_text">Download</string>
     <string name="image_URL">http://static.businessinsider.com/image/5221df9169beddce49072b56/image.jpg</string>
     <string name="open_button_text">Open</string>
+    <string name="url_edit_label">Enter image URL</string>
+    <string name="default_image_name">image.jpg</string>
 
 </resources>
