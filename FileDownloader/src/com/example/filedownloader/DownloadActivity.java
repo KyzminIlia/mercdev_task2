@@ -1,9 +1,7 @@
 package com.example.filedownloader;
 
-
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
-
 
 public class DownloadActivity extends FragmentActivity {
 	@Override

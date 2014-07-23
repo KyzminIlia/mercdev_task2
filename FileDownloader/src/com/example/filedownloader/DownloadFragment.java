@@ -1,6 +1,7 @@
 package com.example.filedownloader;
 
 import java.io.BufferedInputStream;
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -44,6 +45,7 @@ public class DownloadFragment extends Fragment implements
 
 	@Override
 	public void onStop() {
+
 		super.onStop();
 		Log.d(LOG_TAG, "fragment stopped");
 		enable = downloadButton.isEnabled();
@@ -76,13 +78,27 @@ public class DownloadFragment extends Fragment implements
 	public View onCreateView(LayoutInflater inflater, ViewGroup container,
 			Bundle savedInstanceState) {
 		View v = inflater.inflate(R.layout.f_download, null);
-		progressBar = (ProgressBar) v.findViewById(R.id.download_progress_bar);
 		statusLabel = (TextView) v.findViewById(R.id.status_label);
-		statusLabel.setText(status);
 		downloadButton = (Button) v.findViewById(R.id.download_button);
-		downloadButton.setEnabled(enable);
-		downloadButton.setOnClickListener(new DownloadClick());
-		progressBar.setVisibility(visible);
+		progressBar = (ProgressBar) v.findViewById(R.id.download_progress_bar);
+		File downloadedImage = new File(Environment
+				.getExternalStorageDirectory().getAbsolutePath()
+				+ "/downloadedImage.png");
+		if (downloadedImage.exists()) {
+			downloadButton.setEnabled(true);
+			enable = true;
+			downloadButton.setText(getString(R.string.open_button_text));
+			statusLabel.setText(getString(R.string.status_downloaded));
+			status = statusLabel.getText().toString();
+			downloadButton.setOnClickListener(new OpenClick());
+			progressBar.setVisibility(ProgressBar.INVISIBLE);
+			visible = ProgressBar.INVISIBLE;
+		} else {
+			statusLabel.setText(status);
+			downloadButton.setEnabled(enable);
+			downloadButton.setOnClickListener(new DownloadClick());
+			progressBar.setVisibility(visible);
+		}
 		return v;
 	}
 
@@ -208,7 +224,7 @@ public class DownloadFragment extends Fragment implements
 				URLConnection connection = url.openConnection();
 				connection.connect();
 				int lenghtOfFile = connection.getContentLength();
-				input = new BufferedInputStream(url.openStream(), 8192);
+				input = new BufferedInputStream(url.openStream(), 1024);
 				OutputStream output = new FileOutputStream(Environment
 						.getExternalStorageDirectory().getAbsolutePath()
 						+ "/downloadedImage.png");
@@ -232,16 +248,10 @@ public class DownloadFragment extends Fragment implements
 				output.close();
 				return pic;
 			} catch (IOException e) {
-				String exception = "Ошибка ввода/вывода";
+				String exception = "Невозможно соединиться с сайтом";
 				getContext().sendBroadcast(
 						new Intent(BROADCAST_RECIEVER_ACTION).putExtra(
 								DownloadFragment.EXCEPTION_TAG, exception));
-			} catch (NullPointerException e) {
-				String exception = "Не удалось соединиться с сайтом";
-				getContext().sendBroadcast(
-						new Intent(BROADCAST_RECIEVER_ACTION).putExtra(
-								DownloadFragment.EXCEPTION_TAG, exception));
-
 			}
 			return null;
 
@@ -252,6 +262,5 @@ public class DownloadFragment extends Fragment implements
 	@Override
 	public void onLoaderReset(Loader<Bitmap> arg0) {
 
-		
 	}
 }
