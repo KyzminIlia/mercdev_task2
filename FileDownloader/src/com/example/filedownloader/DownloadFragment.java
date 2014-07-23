@@ -42,6 +42,7 @@ public class DownloadFragment extends Fragment implements
 	private static final String STATUS_TAG = "status";
 	private static final String EXCEPTION_TAG = "exception";
 	private static final String BROADCAST_RECIEVER_ACTION = "com.example.filedownloader";
+	private boolean downloading = false;
 
 	@Override
 	public void onStop() {
@@ -84,7 +85,7 @@ public class DownloadFragment extends Fragment implements
 		File downloadedImage = new File(Environment
 				.getExternalStorageDirectory().getAbsolutePath()
 				+ "/downloadedImage.png");
-		if (downloadedImage.exists()) {
+		if (downloadedImage.exists() && !downloading) {
 			downloadButton.setEnabled(true);
 			enable = true;
 			downloadButton.setText(getString(R.string.open_button_text));
@@ -127,6 +128,7 @@ public class DownloadFragment extends Fragment implements
 						progressBar.setProgress(status);
 					} else {
 						Log.d(LOG_TAG, "message delivered");
+						downloading = false;
 						imgLoader.cancelLoad();
 						statusLabel.setText(getString(R.string.status_idle));
 						downloadButton.setEnabled(true);
@@ -156,6 +158,7 @@ public class DownloadFragment extends Fragment implements
 			btnDownload.setEnabled(false);
 			progressBar.setVisibility(ProgressBar.VISIBLE);
 			try {
+				downloading = true;
 				imgLoader.forceLoad();
 			} catch (Exception e) {
 				statusLabel.setText(e.getMessage());
@@ -194,6 +197,7 @@ public class DownloadFragment extends Fragment implements
 		downloadButton.setText(getString(R.string.open_button_text));
 		downloadButton.setOnClickListener(new OpenClick());
 		progressBar.setVisibility(ProgressBar.INVISIBLE);
+		downloading = false;
 
 	}
 
