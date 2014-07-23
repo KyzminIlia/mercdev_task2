@@ -137,7 +137,7 @@ public class DownloadFragment extends Fragment implements
 						progressBar.setVisibility(ProgressBar.INVISIBLE);
 						Toast toast = Toast.makeText(getView().getContext(),
 								msgIntent.getStringExtra(EXCEPTION_TAG),
-								Toast.LENGTH_LONG);
+								Toast.LENGTH_SHORT);
 						toast.show();
 					}
 
