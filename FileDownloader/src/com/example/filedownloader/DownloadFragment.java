@@ -146,11 +146,11 @@ public class DownloadFragment extends Fragment implements
 			@Override
 			public void beforeTextChanged(CharSequence s, int start, int count,
 					int after) {
-
 			}
 
 			@Override
 			public void afterTextChanged(Editable s) {
+
 				String imageName = urlEdit
 						.getText()
 						.toString()
@@ -160,6 +160,7 @@ public class DownloadFragment extends Fragment implements
 						.getExternalStorageDirectory().getAbsolutePath()
 						+ "/"
 						+ imageName);
+
 				if (imageName.equals("")) {
 					imageName = getString(R.string.default_image_name);
 					File image = new File(Environment
@@ -176,7 +177,7 @@ public class DownloadFragment extends Fragment implements
 						downloadButton.setOnClickListener(new OpenClick());
 					}
 
-				} else if (downloadedImage.exists() && !imageName.equals("")) {
+				} else if (downloadedImage.exists()) {
 					downloaded = false;
 					imgLoader.setImageName(imageName);
 					downloadButton
@@ -377,7 +378,8 @@ public class DownloadFragment extends Fragment implements
 					output.close();
 					return pic;
 				} else {
-					String exception = "Неверный формат изображения";
+					String exception = getContext().getString(
+							R.string.bad_extension_message);
 					LocalBroadcastManager.getInstance(getContext())
 							.sendBroadcast(
 									new Intent(ACTION_CHANGE_STATUS).putExtra(
@@ -385,13 +387,15 @@ public class DownloadFragment extends Fragment implements
 											exception));
 				}
 			} catch (MalformedURLException e) {
-				String exception = "Неверный URL";
+				String exception = getContext().getString(
+						R.string.bad_URL_message);
 				LocalBroadcastManager.getInstance(getContext()).sendBroadcast(
 						new Intent(ACTION_CHANGE_STATUS).putExtra(
 								DownloadFragment.EXTRA_EXCEPTION, exception));
 
 			} catch (IOException e) {
-				String exception = "Невозможно соединиться с сайтом";
+				String exception = getContext().getString(
+						R.string.connection_problem_message);
 				LocalBroadcastManager.getInstance(getContext()).sendBroadcast(
 						new Intent(ACTION_CHANGE_STATUS).putExtra(
 								DownloadFragment.EXTRA_EXCEPTION, exception));

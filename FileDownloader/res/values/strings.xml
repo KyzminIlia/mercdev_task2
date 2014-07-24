@@ -2,7 +2,6 @@
 
     <string name="app_name">File downloader</string>
     <string name="a_label">Picture downloader</string>
-    <string name="status_label">Status:</string>
     <string name="status_idle">Status: Idle</string>
     <string name="status_downloading">Status: Downloading</string>
     <string name="status_downloaded">Status: Downloaded</string>
@@ -11,7 +10,8 @@
     <string name="open_button_text">Open</string>
     <string name="url_edit_label">Enter image URL</string>
     <string name="default_image_name">image.jpg</string>
-    <string name ="bad_extension_message">Неверный формат изображения</string>
-    <string name = "bad_URL_message">Неверный URL</string>
+    <string name="bad_extension_message">Неверный формат изображения</string>
+    <string name="bad_URL_message">Неверный URL</string>
+    <string name = "connection_problem_message">Невозможно соединиться с сайтом</string>
 
 </resources>
